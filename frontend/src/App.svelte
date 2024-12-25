@@ -1,11 +1,16 @@
 <script lang="ts">
     import Button from "./lib/Button.svelte";
     import QuizCard from "./lib/QuizCard.svelte";
+    import {NetService} from "./service/net"
+
 
     let quizzes: { id: string; name: string }[] = [];
 
+    let netService = new NetService();
+    netService.connect()
+
     let code = "";
-    let msg = ""
+    let msg = "";
 
     async function getQuizzes() {
         let response = await fetch("http://localhost:3000/api/quizzes");
@@ -20,28 +25,28 @@
     }
 
     function connect() {
-        let websocket = new WebSocket("ws://localhost:3000/ws");
-        websocket.onopen = () => {
-            console.log("opened connection");
-            websocket.send(`join: ${code}`);
-        };
+        netService.sendPacket({
+            id:0,
+            code:"1234",
+            name: "coolname555"
+        })
 
-        websocket.onmessage = (event) => {
-            console.log(event.data);
-        };
+        // let websocket = new WebSocket("ws://localhost:3000/ws");
+        // websocket.onopen = () => {
+        //     console.log("opened connection");
+        //     websocket.send(`join: ${code}`);
+        // };
+
+        // websocket.onmessage = (event) => {
+        //     console.log(event.data);
+        // };
     }
 
     function hostQuiz(quiz: { id: string; name: string }) {
-        let websocket = new WebSocket("ws://localhost:3000/ws");
-        websocket.onopen = () => {
-            console.log("opened connection");
-            websocket.send(`host: ${quiz.id}`);
-        };
-
-        websocket.onmessage = (event) => {
-            msg = event.data;
-            console.log(event.data);
-        };
+        netService.sendPacket({
+            id:1,
+            quizId:quiz.id
+        })
     }
 </script>
 
