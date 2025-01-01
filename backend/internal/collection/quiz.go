@@ -2,10 +2,12 @@ package collection
 
 import (
 	"context"
+	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/v2/mongo"
+
+	"go.mongodb.org/mongo-driver/mongo"
 	"quiz.com/quiz/internal/entity"
 )
 
@@ -37,13 +39,25 @@ func (c QuizCollection) GetQuizzes() ([]entity.Quiz, error) {
 		return nil, err
 	}
 
+	// res2B, _ := json.Marshal(quiz)
+	// fmt.Println(string(res2B))
+
 	return quiz, nil
 }
 
 func (c QuizCollection) GetQuizById(id primitive.ObjectID) (*entity.Quiz, error) {
+
+	fmt.Println(id)
+	// Primero verificamos si existe
+	count, err := c.collection.CountDocuments(context.Background(), bson.M{"_id": id})
+	if err != nil {
+		return nil, err
+	}
+	fmt.Printf("Documentos encontrados con ID %s: %d\n", id.Hex(), count)
+
 	result := c.collection.FindOne(context.Background(), bson.M{"_id": id})
 	var quiz entity.Quiz
-	err := result.Decode(&quiz)
+	err = result.Decode(&quiz)
 	if err != nil {
 		return nil, err
 	}

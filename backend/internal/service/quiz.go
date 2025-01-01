@@ -1,6 +1,7 @@
 package service
 
 import (
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"quiz.com/quiz/internal/collection"
 	"quiz.com/quiz/internal/entity"
 )
@@ -17,4 +18,8 @@ func Quiz(quizCollection *collection.QuizCollection) *QuizService {
 
 func (s QuizService) GetQuizzes() ([]entity.Quiz, error) {
 	return s.quizCollection.GetQuizzes()
+}
+
+func (s QuizService) GetQuizById(id primitive.ObjectID) (*entity.Quiz, error) {
+	return s.quizCollection.GetQuizById(id)
 }

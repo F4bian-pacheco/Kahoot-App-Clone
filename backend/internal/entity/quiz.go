@@ -1,13 +1,13 @@
 package entity
 
 import (
-	"go.mongodb.org/mongo-driver/v2/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Quiz struct {
-	Id        bson.ObjectID  `json:"id" bson:"_id"` // Asegúrate de que esté como ObjectID
-	Name      string         `json:"name"`
-	Questions []QuizQuestion `json:"questions"`
+	Id        primitive.ObjectID `bson:"_id" json:"id" ` // Asegúrate de que esté como ObjectID
+	Name      string             `json:"name"`
+	Questions []QuizQuestion     `json:"questions"`
 }
 
 type QuizQuestion struct {
