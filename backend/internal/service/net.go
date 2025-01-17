@@ -8,12 +8,11 @@ import (
 	"github.com/gofiber/contrib/websocket"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"quiz.com/quiz/internal/entity"
-	"quiz.com/quiz/internal/game"
 )
 
 type NetService struct {
 	quizService *QuizService
-	games       []*game.Game
+	games       []*Game
 
 	// games []*Game
 }
@@ -21,7 +20,7 @@ type NetService struct {
 func Net(quizService *QuizService) *NetService {
 	return &NetService{
 		quizService: quizService,
-		games:       []*game.Game{},
+		games:       []*Game{},
 	}
 }
 
@@ -38,6 +37,21 @@ type QuestionShowPacket struct {
 	Question entity.QuizQuestion `json:"question"`
 }
 
+type ChangeGameStatePacket struct {
+	State GameState `json:"state"`
+}
+
+type PlayerJoinPacket struct {
+	Player Player `json:"player"`
+}
+
+type StartGamePacket struct {
+}
+
+type TickPacket struct {
+	Tick int `json:"tick"`
+}
+
 func (c *NetService) packetIdToPacket(packetId uint8) any {
 	switch packetId {
 	case 0:
@@ -47,6 +61,10 @@ func (c *NetService) packetIdToPacket(packetId uint8) any {
 	case 1:
 		{
 			return &HostNamePacket{}
+		}
+	case 5:
+		{
+
 		}
 	}
 	return nil
@@ -58,15 +76,36 @@ func (c *NetService) packetToPacketId(packet any) (uint8, error) {
 		{
 			return 2, nil
 		}
+	case ChangeGameStatePacket:
+		{
+			return 3, nil
+		}
+	case PlayerJoinPacket:
+		{
+			return 4, nil
+		}
+	case TickPacket:
+		{
+			return 6, nil
+		}
 	}
 
 	return 0, errors.New("invalid packet type")
 
 }
 
-func (c *NetService) geGameByCode(code string) *game.Game {
+func (c *NetService) geGameByCode(code string) *Game {
 	for _, game := range c.games {
 		if game.Code == code {
+			return game
+		}
+	}
+	return nil
+}
+
+func (c *NetService) getGameByHost(host *websocket.Conn) *Game {
+	for _, game := range c.games {
+		if game.Host == host {
 			return game
 		}
 	}
@@ -123,33 +162,23 @@ func (c *NetService) OnIncomingMessage(con *websocket.Conn, mt int, msg []byte) 
 				return
 			}
 
-			newGame := game.New(*quiz, con)
-			fmt.Println(newGame.Code, newGame.Id)
-			c.games = append(c.games, &newGame)
+			game := newGame(*quiz, con, c)
+			fmt.Println("new game", game.Code)
+			c.games = append(c.games, &game)
 
-			// go func() {
-			// 	time.Sleep(time.Second * 5)
-			// 	c.SendPacket(con, QuestionShowPacket{
-			// 		Question: entity.QuizQuestion{
-			// 			Name: "Whats is 2+2?",
-			// 			Choices: []entity.QuizChoice{
-			// 				{
-			// 					Name: "4",
-			// 				},
-			// 				{
-			// 					Name: "9",
-			// 				},
-			// 				{
-			// 					Name: "hola",
-			// 				},
-			// 				{
-			// 					Name: "chao",
-			// 				},
-			// 			},
-			// 		},
-			// 	})
+			c.SendPacket(con, ChangeGameStatePacket{
+				State: LobbyState,
+			})
 
-			// }()
+			break
+		}
+	case *StartGamePacket:
+		{
+			game := c.getGameByHost(con)
+			if game == nil {
+				return
+			}
+			game.Start()
 			break
 		}
 	}

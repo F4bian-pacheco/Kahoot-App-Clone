@@ -1,20 +1,44 @@
 <script lang="ts">
     import Button from "./lib/Button.svelte";
     import QuizCard from "./lib/QuizCard.svelte";
-    import type { QuizQuestion } from "./model/quiz";
-    import { NetService } from "./service/net";
+    import type { Player, QuizQuestion } from "./model/quiz";
+    import { NetService, PacketTypes, type ChangeGameStatePacket, type PlayerJoinPacket, type TickPacket } from "./service/net";
 
     let quizzes: { id: string; name: string }[] = [];
     let currentQuestion: QuizQuestion | null = null;
 
+    let tick = 0;
+
+    let players: Player[] = [];
+
     let netService = new NetService();
-    netService.connect();
+
+    setTimeout(() => {
+        netService.connect();
+    },500)
+
     netService.onPacket((packet: any) => {
         console.log(packet);
         switch (packet.id) {
             case 2: {
                 currentQuestion = packet.question;
                 break;
+            }
+
+            case PacketTypes.ChangeGameState: {
+                let data = packet as ChangeGameStatePacket;
+                console.log(data.state);
+                break;
+            }
+            case PacketTypes.PlayerJoin:{
+                let data = packet as PlayerJoinPacket;
+                players = [...players,data.player];
+                break;
+            }
+            case PacketTypes.Tick: {
+                let data = packet as TickPacket;
+                tick = data.tick;
+                break
             }
         }
     });
@@ -51,6 +75,12 @@
         // websocket.onmessage = (event) => {
         //     console.log(event.data);
         // };
+    }
+
+    function startGame(){
+        netService.sendPacket({
+            id: PacketTypes.StartGame,
+        });
     }
 
     function hostQuiz(quiz: { id: string; name: string }) {

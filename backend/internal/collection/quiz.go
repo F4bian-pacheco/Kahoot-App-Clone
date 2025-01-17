@@ -39,9 +39,6 @@ func (c QuizCollection) GetQuizzes() ([]entity.Quiz, error) {
 		return nil, err
 	}
 
-	// res2B, _ := json.Marshal(quiz)
-	// fmt.Println(string(res2B))
-
 	return quiz, nil
 }
 

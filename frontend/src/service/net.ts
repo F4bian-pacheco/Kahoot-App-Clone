@@ -1,3 +1,36 @@
+import type { Player } from "../model/quiz";
+
+export enum PacketTypes {
+  Connect,
+  HostGame,
+  QuestionShow,
+  ChangeGameState,
+  PlayerJoin,
+  StartGame,
+  Tick
+}
+
+
+export enum GameState {
+  Lobby,
+  Play,
+  Reveal,
+  End
+}
+
+
+export interface ChangeGameStatePacket {
+  state: GameState
+}
+
+export interface PlayerJoinPacket {
+  player: Player
+}
+
+export interface TickPacket {
+  tick: number
+}
+
 
 export class NetService {
   private webSocket!: WebSocket;
